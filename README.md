@@ -1,2 +1,4 @@
-# task_flow_ds_base
-Prefect (https://docs.prefect.io/) Task Flow paradigm base code for data science research
+# NLP Tasks
+
+Contains commonly used datasets, explicit semantic extraction as tasks (Work in progress).
+
