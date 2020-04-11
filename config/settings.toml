@@ -1,1 +1,18 @@
 [default]
+    [default.worldtree_v1]
+        train='/path/to/train'
+        test='/path/to/test'
+        dev='/path/to/dev'
+        table_store='/path/to/table_store'
+    [default.worldtree_v2]
+        train='/path/to/train'
+        test='/path/to/test'
+        dev='/path/to/dev'
+        table_store='/path/to/table_store'
+[test]
+    [test.worldtree_v1]
+        dev='data/worldtree_v1/test.tsv'
+        table_store='data/worldtree_v1/table_store'
+    [test.worldtree_v2]
+        dev='data/worldtree_v2/questions.dev.tsv'
+        table_store='data/worldtree_v2/table_store'
