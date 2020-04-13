@@ -62,6 +62,7 @@ class WorldTreeExtractionTask(Task):
             ("D", re.compile("(?<=\([D|4]\)).*")),
         ]
         question_re = re.compile("\([ABCD]\).*")
+        question_num_re = re.compile("\([1234]\).*")
         for _, row in tqdm(expl_df.iterrows(), total=expl_df.shape[0]):
             # Check for nan values.
             # WARNING: Sometimes explanation is empty
@@ -104,7 +105,9 @@ class WorldTreeExtractionTask(Task):
                 # school_grade = row[SCHOOL_GRADE]
                 question_explanation = {
                     "id": id,
-                    "question": question_re.sub("", question).strip(),
+                    "question": question_num_re.sub(
+                        "", question_re.sub("", question)
+                    ).strip(),
                     "explanation": explanation,
                     "answer": answer,
                     "fold": fold,
