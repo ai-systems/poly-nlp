@@ -56,10 +56,10 @@ class WorldTreeExtractionTask(Task):
         expl_df = pd.read_csv(question_explanation_path, sep="\t", encoding="utf-8")
         expl_items = {}
         choices_re = [
-            ("A", re.compile("(?<=\([A]\)).*(?=\([B]\))")),
-            ("B", re.compile("(?<=\([B]\)).*(?=\([C]\))")),
-            ("C", re.compile("(?<=\([C]\)).*(?=\([D]\))")),
-            ("D", re.compile("(?<=\([D]\)).*")),
+            ("A", re.compile("(?<=\([A|1]\)).*(?=\([B|2]\))")),
+            ("B", re.compile("(?<=\([B|2]\)).*(?=\([C|3]\))")),
+            ("C", re.compile("(?<=\([C|3]\)).*(?=\([D|4]\))")),
+            ("D", re.compile("(?<=\([D|4]\)).*")),
         ]
         question_re = re.compile("\([ABCD]\).*")
         for _, row in tqdm(expl_df.iterrows(), total=expl_df.shape[0]):
@@ -82,7 +82,10 @@ class WorldTreeExtractionTask(Task):
                     else ""
                     for choice_re in choices_re
                 }
-                answerkey = row[ANSWER_KEY]
+                if row[ANSWER_KEY] in ["1", "2", "3", "4"]:
+                    answerkey = chr((int(row[ANSWER_KEY]) - 1) + ord("A"))
+                else:
+                    answerkey = row[ANSWER_KEY]
                 # List of explanation ids
                 if not pd.isna(row[EXPLANATION]):
                     explanation = {

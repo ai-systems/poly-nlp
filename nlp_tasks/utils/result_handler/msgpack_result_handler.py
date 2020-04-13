@@ -17,6 +17,12 @@ class MsgPackResultHandler(result_handler.ResultHandler):
         file_type: str = ".msgpack",
     ):
         self.read_cache = read_cache
+        self.folder_path = Path(path, task_name)
+        if not self.folder_path.exists():
+            logger.info(
+                f"Checkpoint dir {self.folder_path} does not exist. Creating one"
+            )
+            self.folder_path.mkdir(parents=True)
         self.path_string = Path(path, task_name).with_suffix(file_type)
 
     def read(self, **kwargs):
