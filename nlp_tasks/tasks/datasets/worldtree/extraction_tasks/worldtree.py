@@ -66,6 +66,7 @@ class WorldTreeExtractionTask(Task):
             # Check for nan values.
             # WARNING: Sometimes explanation is empty
             if pd.isna(row[EXPLANATION]) and skip_missing_explanations:
+                logger.warning(f"{row[QID]} does not have any explanations")
                 continue
             if not pd.isna(row[QUESTION]):
                 id = row[QID]
