@@ -11,12 +11,31 @@ from overrides import overrides
 from prefect import Task
 from tqdm import tqdm
 
+from .worldtree import WorldTreeVersion
+
 UID = "[SKIP] UID"
 
 
 class TableStoreExtractionTask(Task):
     @overrides
-    def run(self, table_store_path: str, original_map=True) -> Dict[str, Dict]:
+    def run(
+        self,
+        table_store_path: str,
+        original_map=True,
+        table_categories_path=None,
+        worldtree_version=WorldTreeVersion.WorldTree_V2,
+    ) -> Dict[str, Dict]:
+        table_categories = {}
+        if table_categories_path is not None:
+            logger.info("Processing table categories file")
+            with open(table_categories_path) as f:
+                for line in f:
+                    cat, k_type = line.split()
+                    k_type = k_type.split("/")[0]  # For RET/LEX
+                    if worldtree_version == WorldTreeVersion.WorldTree_V2:
+                        table_categories[cat.replace("PROTO-", "")] = k_type.strip()
+                    else:
+                        table_categories[cat] = k_type.strip()
         logger.info(f"Extracting table store from: {table_store_path}")
         # Get all tsv files
         table_store_files = glob.glob(f"{table_store_path}/*.tsv")
@@ -24,7 +43,10 @@ class TableStoreExtractionTask(Task):
             lambda store, file_name: {
                 **store,
                 **self.process_store(
-                    file_name, os.path.basename(file_name), original_map
+                    file_name,
+                    os.path.basename(file_name),
+                    original_map,
+                    table_categories,
                 ),
             },
             tqdm(table_store_files),
@@ -34,7 +56,7 @@ class TableStoreExtractionTask(Task):
 
     @staticmethod
     def process_store(
-        file_name: str, table_name: str, original_map=True
+        file_name: str, table_name: str, original_map=True, table_categories={}
     ) -> Dict[str, Dict]:
         """Process individual file stores
         """
@@ -94,6 +116,9 @@ class TableStoreExtractionTask(Task):
                         "explanation": explanation,
                         "sentence_explanation": sentence_explanation,
                         "table_name": table_name.split(".")[0],
+                        "knowledge_category": table_categories.get(
+                            table_name.split(".")[0], "RET"
+                        ),
                         "filtered_explanation": filtered_explanation,
                         "fact": fact,
                     }
@@ -102,6 +127,9 @@ class TableStoreExtractionTask(Task):
                     "explanation": explanation,
                     "sentence_explanation": sentence_explanation,
                     "table_name": table_name.split(".")[0],
+                    "knowledge_category": table_categories.get(
+                        table_name.split(".")[0], "RET"
+                    ),
                     "filtered_explanation": filtered_explanation,
                 }
         except KeyError:
