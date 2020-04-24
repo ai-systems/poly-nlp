@@ -3,6 +3,7 @@ from collections import defaultdict
 from typing import Dict, List, Tuple
 
 import numpy as np
+from loguru import logger
 from overrides import overrides
 
 from .metric import METRIC_LABEL, MODEL_NAME, SCORE, SPLIT_NAME, Metric
@@ -43,12 +44,14 @@ class MAP(Metric):
         # Example: Mercury_SC_416133
         if targets:
             for _ in targets:
-                ranks.append(10 ** 9)
+                ranks.append(9000)
 
         return ranks
 
     @staticmethod
-    def average_precision(actual, predicted):
+    def average_precision(id, actual, predicted):
+        if len(predicted) == 0:
+            logger.warning(f"{id} predicted was empty")
         total = 0.0
         ranks = MAP.compute_ranks(actual, predicted)
         if not ranks:
@@ -65,7 +68,7 @@ class MAP(Metric):
         return round(
             np.mean(
                 [
-                    self.average_precision(a, predicted[id])
+                    self.average_precision(id, a, predicted[id])
                     for id, a in self.actual.items()
                 ]
             ),

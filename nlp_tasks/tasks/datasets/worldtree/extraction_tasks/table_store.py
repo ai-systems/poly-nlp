@@ -126,6 +126,7 @@ class TableStoreExtractionTask(Task):
                     "id": id,
                     "explanation": explanation,
                     "sentence_explanation": sentence_explanation,
+                    "fact": " ".join(sentence_explanation),
                     "table_name": table_name.split(".")[0],
                     "knowledge_category": table_categories.get(
                         table_name.split(".")[0], "RET"

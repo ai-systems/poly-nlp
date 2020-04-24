@@ -43,11 +43,6 @@ def msgpack_checkpoint_handler(
         and old_state.is_pending()
         and new_state.is_running()
     ):
-        if not hasattr(task_runner, "upstream_states"):
-            raise TypeError(
-                "upstream_states not found in task runner. Make sure to use "
-                "prefect_ds.task_runner.DSTaskRunner."
-            )
         try:
             data = task_runner.task.result_handler.read()
         except FileNotFoundError:
