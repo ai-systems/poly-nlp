@@ -12,7 +12,7 @@ from prefect.engine.state import State, Success
 from ..task_runner import DSTaskRunner
 
 
-def msgpack_checkpoint_handler(
+def msgpack_checkpoint_handler_manual(
     task_runner: DSTaskRunner, old_state: State, new_state: State
 ) -> State:
     """
@@ -41,29 +41,13 @@ def msgpack_checkpoint_handler(
         raise AttributeError(
             "Cannot use standard prefect checkpointing with this handler"
         )
-    if task_runner.result_handler is not None:
-        input_mapping = ""
-        for edge, state in sorted(
-            task_runner.upstream_states.items(), key=lambda item: item[0].key
-        ):
-            key = edge.key
-            try:
-                if isinstance(state.result, Enum):
-                    hashed_val = md5(bencode.encode(state.result.value)).hexdigest()
-                else:
-                    hashed_val = md5(bencode.encode(state.result)).hexdigest()
-                input_mapping = f"{key}:{hashed_val}|{input_mapping}"
-            except KeyError:
-                logger.error(
-                    f"Unable to encode argument {key}. Will not be conisdered for caching validation!!!"
-                )
     if (
         task_runner.result_handler is not None
         and old_state.is_pending()
         and new_state.is_running()
     ):
         try:
-            data = task_runner.task.result_handler.read(input_mapping)
+            data = task_runner.task.result_handler.read()
         except FileNotFoundError:
             return new_state
         except TypeError:  # unexpected argument input_mapping
@@ -80,6 +64,6 @@ def msgpack_checkpoint_handler(
         and old_state.is_running()
         and new_state.is_successful()
     ):
-        task_runner.task.result_handler.write(new_state.result, input_mapping)
+        task_runner.task.result_handler.write(new_state.result)
 
     return new_state

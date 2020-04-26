@@ -1,1 +1,2 @@
 from .msgpack_handler import msgpack_checkpoint_handler
+from .msgpack_handler_manual import msgpack_checkpoint_handler_manual
