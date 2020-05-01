@@ -28,7 +28,7 @@ class MsgPackResultHandler(result_handler.ResultHandler):
             logger.info(f"Checkpoint dir {self.path} does not exist. Creating one")
             self.path.mkdir(parents=True)
 
-    def read(self, input_mapping, **kwargs):
+    def read(self, input_mapping=None, **kwargs):
         """Read from file
         """
         if self.input_mapping is not None:

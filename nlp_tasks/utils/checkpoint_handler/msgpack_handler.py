@@ -42,7 +42,7 @@ def msgpack_checkpoint_handler(
             "Cannot use standard prefect checkpointing with this handler"
         )
     if task_runner.result_handler is not None:
-        input_mapping = ""
+        input_mapping = None
         for edge, state in sorted(
             task_runner.upstream_states.items(), key=lambda item: item[0].key
         ):
