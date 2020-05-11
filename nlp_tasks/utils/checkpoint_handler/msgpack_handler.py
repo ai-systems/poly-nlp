@@ -3,13 +3,13 @@ import typing
 from enum import Enum
 from hashlib import md5
 
-import bencode
 from loguru import logger
 from prefect.core.edge import Edge
 from prefect.engine.result import Result
 from prefect.engine.state import State, Success
 
 from ..task_runner import DSTaskRunner
+from .bencode import encode
 
 
 def msgpack_checkpoint_handler(
@@ -49,9 +49,9 @@ def msgpack_checkpoint_handler(
             key = edge.key
             try:
                 if isinstance(state.result, Enum):
-                    hashed_val = md5(bencode.encode(state.result.value)).hexdigest()
+                    hashed_val = md5(encode(state.result.value)).hexdigest()
                 else:
-                    hashed_val = md5(bencode.encode(state.result)).hexdigest()
+                    hashed_val = md5(encode(state.result)).hexdigest()
                 input_mapping = f"{key}:{hashed_val}|{input_mapping}"
             except KeyError:
                 logger.error(
