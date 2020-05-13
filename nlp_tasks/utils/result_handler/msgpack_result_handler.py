@@ -45,10 +45,11 @@ class MsgPackResultHandler(result_handler.ResultHandler):
         if not os.path.isfile(path_string) or not self.read_cache:
             logger.info(f"Cached file not found. Skippig cache retrieval")
             raise FileNotFoundError
-        logger.success("Successfully retrieved from cache")
 
         with open(path_string, "rb") as f:
-            return msgpack.unpackb(f.read(), raw=False)
+            output = msgpack.unpackb(f.read(), raw=False)
+        logger.success("Successfully retrieved from cache")
+        return output
 
     def write(self, result: typing.Any, input_mapping):
         """Write result to file
