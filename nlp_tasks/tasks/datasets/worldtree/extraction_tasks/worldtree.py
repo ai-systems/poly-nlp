@@ -26,9 +26,13 @@ class WorldTreeExtractionTask(Task):
         expl_bank_data_file: str,
         worldtree_version: WorldTreeVersion,
         skip_missing_explanations=False,
+        skip_empty_explanations=True,
     ) -> Dict[str, Dict]:
         return self.process_sheet(
-            expl_bank_data_file, worldtree_version, skip_missing_explanations
+            expl_bank_data_file,
+            worldtree_version,
+            skip_missing_explanations,
+            skip_empty_explanations,
         )
 
     @staticmethod
@@ -36,6 +40,7 @@ class WorldTreeExtractionTask(Task):
         question_explanation_path: str,
         worldtree_version: WorldTreeVersion,
         skip_missing_explanations: bool,
+        skip_empty_explanations,
     ) -> Dict[str, Dict]:
         logger.info(
             f"Extracting data from {question_explanation_path}, WorldTree Version {worldtree_version}"
@@ -46,12 +51,14 @@ class WorldTreeExtractionTask(Task):
             FOLD = "fold"
             QUESTION = "Question"
             ANSWER_KEY = "AnswerKey"
+            FLAG = "flags"
         else:
             QID = "QuestionID"
             EXPLANATION = "explanation"
             FOLD = "FocusNotes"
             QUESTION = "question"
             ANSWER_KEY = "AnswerKey"
+            FLAG = "flag"
 
         expl_df = pd.read_csv(question_explanation_path, sep="\t", encoding="utf-8")
         expl_items = {}
@@ -66,9 +73,11 @@ class WorldTreeExtractionTask(Task):
         for _, row in tqdm(expl_df.iterrows(), total=expl_df.shape[0]):
             # Check for nan values.
             # WARNING: Sometimes explanation is empty
+            if skip_empty_explanations and row[FLAG] != "SUCCESS":
+                logger.warning(f"{row[QID]} flag is not sucess. Skipping")
+                continue
             if pd.isna(row[EXPLANATION]) and skip_missing_explanations:
                 logger.warning(f"{row[QID]} does not have any explanations")
-                continue
             if not pd.isna(row[QUESTION]):
                 id = row[QID]
                 question = row[QUESTION]
