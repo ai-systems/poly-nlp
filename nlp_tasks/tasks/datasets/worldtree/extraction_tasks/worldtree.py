@@ -58,7 +58,7 @@ class WorldTreeExtractionTask(Task):
             FOLD = "FocusNotes"
             QUESTION = "question"
             ANSWER_KEY = "AnswerKey"
-            FLAG = "flag"
+            FLAG = "flags"
 
         expl_df = pd.read_csv(question_explanation_path, sep="\t", encoding="utf-8")
         expl_items = {}
@@ -73,11 +73,16 @@ class WorldTreeExtractionTask(Task):
         for _, row in tqdm(expl_df.iterrows(), total=expl_df.shape[0]):
             # Check for nan values.
             # WARNING: Sometimes explanation is empty
-            if skip_empty_explanations and "EMPTY" in str(row[FLAG]):
-                logger.warning(f"{row[QID]} flag is not sucess. Skipping")
-                continue
+            # if (
+            #     not skip_missing_explanations
+            #     and skip_empty_explanations
+            #     and "EMPTY" in str(row[FLAG])
+            # ):
+            #     logger.warning(f"{row[QID]} flag is not sucess. Skipping")
+            #     continue
             if pd.isna(row[EXPLANATION]) and skip_missing_explanations:
                 logger.warning(f"{row[QID]} does not have any explanations")
+                continue
             if not pd.isna(row[QUESTION]):
                 id = row[QID]
                 question = row[QUESTION]
