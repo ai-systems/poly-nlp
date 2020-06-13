@@ -52,6 +52,8 @@ class WorldTreeExtractionTask(Task):
             QUESTION = "Question"
             ANSWER_KEY = "AnswerKey"
             FLAG = "flags"
+            EXAM_NAME = "examName"
+            GRADE = "grade"
         else:
             QID = "QuestionID"
             EXPLANATION = "explanation"
@@ -59,6 +61,8 @@ class WorldTreeExtractionTask(Task):
             QUESTION = "question"
             ANSWER_KEY = "AnswerKey"
             FLAG = "flags"
+            EXAM_NAME = "examName"
+            GRADE = "grade"
 
         expl_df = pd.read_csv(question_explanation_path, sep="\t", encoding="utf-8")
         expl_items = {}
@@ -126,6 +130,8 @@ class WorldTreeExtractionTask(Task):
                     "answer": answer,
                     "fold": fold,
                     "topic": topic,
+                    "grade": row[GRADE],
+                    "examName": row[EXAM_NAME],
                     # colling_expalanation=colling_expalanation,
                     # knowledge_type=knowledge_type,
                     # school_grade=school_grade,

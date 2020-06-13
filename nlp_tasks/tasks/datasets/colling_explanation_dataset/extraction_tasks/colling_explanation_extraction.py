@@ -26,6 +26,7 @@ class CollingExplanationExtractionTask(Task):
         QID = "questionID"
         QUESTION = "question"
         ANSWER_KEY = "AnswerKey"
+        JUSTIFICATION = "justification"
 
         expl_df = pd.read_csv(question_explanation_path, encoding="utf-8")
         expl_items = {}
@@ -41,6 +42,10 @@ class CollingExplanationExtractionTask(Task):
             if not pd.isna(row[QUESTION]):
                 id = row[QID]
                 question = row[QUESTION]
+
+                if pd.isna(row[JUSTIFICATION]) or row[JUSTIFICATION] == "":
+                    logger.warning(f"{id} have no justifications. Skipping it")
+                    continue
                 choices = {
                     choice_re[0]: choice_re[1].findall(question)[0].strip()
                     if len(choice_re[1].findall(question)) > 0

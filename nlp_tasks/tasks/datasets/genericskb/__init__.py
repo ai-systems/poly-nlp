@@ -1,0 +1,1 @@
+from .genericskb import GenericsKBExtractionTask

@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 class AristoTableStoreExtractionTask(Task):
     @overrides
-    def run(self, table_store_path: str, table_name,) -> Dict[str, Dict]:
+    def run(self, table_store_path: str, table_name) -> Dict[str, Dict]:
         table_categories = {}
         logger.info(f"Extracting table store from: {table_store_path}")
         # Get all tsv files
