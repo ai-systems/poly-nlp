@@ -23,14 +23,17 @@ class ARCDatasetExtraction(Task):
         """
         arc_data_question = {}
         with open(path, "r") as f:
-            for line in tqdm(f, "Processing ARC dataset"):
+            for line in tqdm(f, "Extracting ARC Dataset"):
                 data = json.loads(line)
+                choices = {
+                    choice["label"]: choice["text"] for choice in data["choices"]
+                }
                 arc_data_question[data["id"]] = {
                     "id": data["id"],
                     "question": data["question"],
-                    "answer": data["choices"][data["answerKey"]],
+                    "answer": choices[data["answerKey"]],
                     "fold": fold,
-                    "choices": data["choices"],
+                    "choices": choices,
                     "answerKey": data["answerKey"],
                 }
         return arc_data_question
