@@ -7,7 +7,7 @@ from prefect import Task
 from tqdm import tqdm
 
 
-class ARCDataset(Task):
+class ARCDatasetExtraction(Task):
     """Defines the ARC dataset
     """
 
