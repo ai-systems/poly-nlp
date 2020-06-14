@@ -26,11 +26,12 @@ class ARCDatasetExtraction(Task):
             for line in tqdm(f, "Extracting ARC Dataset"):
                 data = json.loads(line)
                 choices = {
-                    choice["label"]: choice["text"] for choice in data["choices"]
+                    choice["label"]: choice["text"]
+                    for choice in data["question"]["choices"]
                 }
                 arc_data_question[data["id"]] = {
                     "id": data["id"],
-                    "question": data["question"],
+                    "question": data["question"]["stem"],
                     "answer": choices[data["answerKey"]],
                     "fold": fold,
                     "choices": choices,
