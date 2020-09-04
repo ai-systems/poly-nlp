@@ -16,3 +16,5 @@
     [test.worldtree_v2]
         dev='data/worldtree_v2/questions.dev.tsv'
         table_store='data/worldtree_v2/table_store'
+    [test.utils]
+        utils_path='data/test'

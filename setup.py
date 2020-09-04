@@ -1,10 +1,10 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="NlpTasks",
-    version="0.0.2",
+    name="PolyNLP",
+    version="0.0.1",
     description="WIP",
-    url="https://github.com/ai-systems/nlp_tasks",
+    url="https://github.com/ai-systems/poly_nlp",
     author="AI Systems, University of Manchester",
     author_email="mokanarangan.thayaparan@manchester.ac.uk",
     license="MIT",

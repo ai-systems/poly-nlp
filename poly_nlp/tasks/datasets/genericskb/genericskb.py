@@ -14,24 +14,31 @@ from tqdm import tqdm
 
 class GenericsKBExtractionTask(Task):
     @overrides
-    def run(self, table_store_path: str) -> Dict[str, Dict]:
+    def run(self, table_store_path: str, filter_fn=None) -> Dict[str, Dict]:
         table_categories = {}
         logger.info(f"Extracting generics kb from: {table_store_path}")
+        logger.info(f"Filter function provided: {filter_fn is not None}")
         # Get all tsv files
-        table_store = self.process_store(table_store_path)
+        table_store = self.process_store(table_store_path, filter_fn=filter_fn)
         return table_store
 
     @staticmethod
-    def process_store(file_name: str) -> Dict[str, Dict]:
+    def process_store(file_name: str, filter_fn=None) -> Dict[str, Dict]:
         """Process individual file stores
         """
         table_df = pd.read_csv(file_name, sep="\t")
         table_items = {}
         for _, row in tqdm(table_df.iterrows(), total=table_df.shape[0]):
             id = str(uuid4())
-            table_items[id] = {
+            skip = False
+            fact = {
                 "id": id,
                 "fact": row["GENERIC SENTENCE"],
                 "source": row["SOURCE"],
+                "score": row["SCORE"],
             }
+            if filter_fn is not None:
+                skip = filter_fn(fact)
+            if not skip:
+                table_items[id] = fact
         return table_items

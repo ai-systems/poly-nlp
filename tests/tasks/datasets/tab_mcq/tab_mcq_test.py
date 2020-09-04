@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from dynaconf import settings
 
-from nlp_tasks.tasks.datasets.tab_mcq.extraction_tasks import (
+from poly_nlp.tasks.datasets.tab_mcq.extraction_tasks import (
     AristoTableStoreExtractionTask,
 )
 

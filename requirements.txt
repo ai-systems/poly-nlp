@@ -16,3 +16,4 @@ ray
 hug
 pyjnius
 bencode.py
+cloudpickle

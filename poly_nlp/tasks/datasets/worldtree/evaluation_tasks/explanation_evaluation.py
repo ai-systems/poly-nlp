@@ -16,8 +16,8 @@ from plotly.offline import plot
 from prefect.tasks import Task
 from tqdm import tqdm
 
-from nlp_tasks.evaluate.metrics import MAP, NDCG, PrecisionTopK, RecallTopK
-from nlp_tasks.evaluate.visualise.latex import LatexDoc
+from poly_nlp.evaluate.metrics import MAP, NDCG, PrecisionTopK, RecallTopK
+from poly_nlp.evaluate.visualise.latex import LatexDoc
 
 
 class ExplanationEvaluationTask(Task):

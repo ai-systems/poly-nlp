@@ -4,7 +4,7 @@ from loguru import logger
 from overrides import overrides
 from prefect import Task
 
-from nlp_tasks.evaluate.metrics import MAP, RecallTopK
+from poly_nlp.evaluate.metrics import MAP, RecallTopK
 
 
 class WorldTreeMAPEvaluationTask(Task):

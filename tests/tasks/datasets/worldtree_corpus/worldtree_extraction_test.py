@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from dynaconf import settings
 
-from nlp_tasks.tasks.datasets.worldtree.extraction_tasks import (
+from poly_nlp.tasks.datasets.worldtree.extraction_tasks import (
     TableStoreExtractionTask,
     WorldTreeExtractionTask,
     WorldTreeVersion,
