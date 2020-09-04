@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from loguru import logger
 from overrides import overrides
 from prefect import Task
 
@@ -18,4 +19,7 @@ class TextCorpusExtractionTask(Task):
                     skip = filter_fn(fact)
                 if not skip:
                     table_store[str(uuid4())] = {"fact": fact}
+        logger.success(
+            f"Text Corpus Extraction successful. Number of facts {len(table_store)}"
+        )
         return table_store

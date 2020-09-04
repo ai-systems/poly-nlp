@@ -1,0 +1,1 @@
+from .allen_srl_extraction_task import AllenSRLExtraction

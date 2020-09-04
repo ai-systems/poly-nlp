@@ -26,6 +26,10 @@ class QASCExtractionTask(Task):
                     choice["label"]: choice["text"]
                     for choice in data["question"]["choices"]
                 }
+                choices_para = {
+                    choice["label"]: choice["para"] if "para" in choices else None
+                    for choice in data["question"]["choices"]
+                }
                 arc_data_question[data["id"]] = {
                     "id": data["id"],
                     "question": data["question"]["stem"],
@@ -33,6 +37,7 @@ class QASCExtractionTask(Task):
                     "fold": fold,
                     "choices": choices,
                     "answerKey": data["answerKey"],
+                    "choices_para": choices_para,
                     "fact1": data["fact1"],
                     "fact2": data["fact2"],
                 }

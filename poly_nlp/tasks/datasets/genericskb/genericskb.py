@@ -20,6 +20,9 @@ class GenericsKBExtractionTask(Task):
         logger.info(f"Filter function provided: {filter_fn is not None}")
         # Get all tsv files
         table_store = self.process_store(table_store_path, filter_fn=filter_fn)
+        logger.success(
+            f"GenericsKB Extraction successful. Number of facts {len(table_store)}"
+        )
         return table_store
 
     @staticmethod
