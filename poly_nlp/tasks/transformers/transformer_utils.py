@@ -1,7 +1,7 @@
 from transformers.tokenization_bert import BertTokenizer
 
 
-def bert_encode_sentence_pairs(
+def encode_sentence_pairs(
     sentence1: str,
     sentence2: str = None,
     tokenizer: BertTokenizer = BertTokenizer,
@@ -52,7 +52,7 @@ def bert_encode_sentence_pairs(
     return input_ids, attention_mask, token_type_ids
 
 
-def bert_convert_token_ids(
+def convert_token_ids(
     tokens: list,
     tokenizer: BertTokenizer = BertTokenizer,
     add_special_tokens=True,
