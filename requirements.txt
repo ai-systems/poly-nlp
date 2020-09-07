@@ -17,3 +17,5 @@ hug
 pyjnius
 bencode.py
 cloudpickle
+h5py
+
