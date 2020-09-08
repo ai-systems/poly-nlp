@@ -5,6 +5,7 @@ from functools import reduce
 
 import ray
 from loguru import logger
+from tqdm import tqdm
 
 from poly_nlp.utils.data_manipulation.data_manipulation import create_dict_chunks
 
@@ -28,7 +29,7 @@ class RayExecutor:
             batch_results = ray.get(
                 [
                     remote_fn.remote(pos=pos, input=batch, **fn_args)
-                    for pos, batch in enumerate(batches)
+                    for pos, batch in enumerate(tqdm(batches))
                 ]
             )
 
