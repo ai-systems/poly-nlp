@@ -11,12 +11,14 @@ from poly_nlp.utils.data_manipulation.data_manipulation import create_dict_chunk
 
 
 class RayExecutor:
-    def run(self, input, fn, fn_args, is_parallel=True):
+    def run(self, input, fn, fn_args, is_parallel=True, batch_count=-1, **kwargs):
         start = time.time()
         if is_parallel == True:
             remote_fn = ray.remote(fn)
 
-            batch_count = multiprocessing.cpu_count()
+            batch_count = (
+                multiprocessing.cpu_count() if batch_count == -1 else batch_count
+            )
             batch_size = math.ceil(len(input) / batch_count)
 
             logger.info(f"Batch_size = {batch_size}")

@@ -5,16 +5,19 @@ import spacy
 from prefect import Task
 from tqdm import tqdm
 
+from poly_nlp.parallel.ray_executor import RayExecutor
+
 
 class SentenceSplitTask(Task):
-    def run(self, paragraph: Dict[str, str]):
-        nlp = spacy.load("en_core_web_sm")
-
+    @staticmethod
+    def process_sentences(pos, input):
         split_sentences = {}
-        for id, sentences in tqdm(paragraph.items(), desc="Splitting sentences"):
+        nlp = spacy.load("en_core_web_sm")
+        for id, sentences in input.items():
             text_sentences = nlp(sentences)
             split_sentences[id] = {}
-            for sent in text_sentences.sents:
-                split_sentences[id][str(uuid4())] = sent.text
-
+            split_sentences[id] = [sent.text for sent in text_sentences.sents]
         return split_sentences
+
+    def run(self, paragraph: Dict[str, str]):
+        return RayExecutor().run(paragraph, self.process_sentences, {})

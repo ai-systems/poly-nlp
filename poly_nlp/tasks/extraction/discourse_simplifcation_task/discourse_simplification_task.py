@@ -11,9 +11,9 @@ from loguru import logger
 from prefect import Task
 from tqdm import tqdm
 
-from covid_fact_bank.utils.data_manipulation.data_manipulation import create_dict_chunks
-from covid_fact_bank.utils.print_utils import suppress_stdout
-from covid_fact_bank.utils.service import ServiceCaller
+from poly_nlp.utils.data_manipulation.data_manipulation import create_dict_chunks
+from poly_nlp.utils.print_utils import suppress_stdout
+from poly_nlp.utils.service import ServiceCaller
 
 LEXICAL_CLUES = ["This", "That"]
 

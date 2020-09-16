@@ -10,7 +10,7 @@ from overrides import overrides
 from prefect import Task
 from tqdm import tqdm
 
-from covid_fact_bank.utils.data_manipulation.data_manipulation import create_dict_chunks
+from poly_nlp.utils.data_manipulation import create_dict_chunks
 
 
 class AllenSRLExtraction(Task):
