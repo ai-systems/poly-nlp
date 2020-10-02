@@ -33,8 +33,7 @@ class GenericsKBExtractionTask(Task):
     def process_store(
         file_name: str, filter_fn=None, process_fn=None
     ) -> Dict[str, Dict]:
-        """Process individual file stores
-        """
+        """Process individual file stores"""
         table_df = pd.read_csv(file_name, sep="\t")
         table_items = {}
         for _, row in tqdm(table_df.iterrows(), total=table_df.shape[0]):
@@ -42,6 +41,7 @@ class GenericsKBExtractionTask(Task):
             skip = False
             fact = {
                 "id": id,
+                "term": row["TERM"],
                 "fact": row["GENERIC SENTENCE"]
                 if process_fn is None
                 else process_fn(row["GENERIC SENTENCE"]),
