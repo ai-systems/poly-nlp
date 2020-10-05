@@ -14,4 +14,5 @@ class EncodingTextTest(TestCase):
             pretrained_file=glove_embedding_file,
             output_path="data/checkpoint",
         )
+        print(output["inputs"]["input_ids"])
 

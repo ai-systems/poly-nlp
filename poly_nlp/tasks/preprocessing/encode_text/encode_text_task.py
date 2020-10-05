@@ -8,7 +8,6 @@ from loguru import logger
 from overrides import overrides
 from poly_nlp.parallel.ray_executor import RayExecutor
 from prefect import Task
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tqdm import tqdm
 
 
@@ -47,20 +46,6 @@ class EncodeTextTask(Task):
                 1 if index < len(query) else 0 for index in range(0, maxlen)
             ]
 
-        input_ids = pad_sequences(
-            input_ids,
-            maxlen=maxlen,
-            dtype=dtype,
-            padding=padding,
-            truncating=truncating,
-        )
-        attention_masks = pad_sequences(
-            attention_masks,
-            maxlen=maxlen,
-            dtype=dtype,
-            padding=padding,
-            truncating=truncating,
-        )
         return {
             "input_ids": np.memmap(
                 f"{output_path}/input_ids.mmap",
