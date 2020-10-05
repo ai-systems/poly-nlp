@@ -22,15 +22,30 @@ class EncodeTextTask(Task):
         return query_output
 
     @staticmethod
-    def map_vocab(input, vec, maxlen, dtype, padding, truncating):
+    def map_vocab(input, vec, maxlen, dtype, padding, truncating, output_path):
         query_mapping = {}
-        input_ids = np.empty(len(input), dtype=object)
-        attention_masks = np.empty(len(input), dtype=object)
+        input_ids = np.memmap(
+            f"{output_path}/input_ids.mmap",
+            dtype=dtype,
+            mode="w+",
+            shape=(len(input), maxlen),
+        )
+        attention_masks = np.memmap(
+            f"{output_path}/attention_maps.mmap",
+            dtype=dtype,
+            mode="w+",
+            shape=(len(input), maxlen),
+        )
 
         for index, (id, query) in enumerate(tqdm(input.items(), "Mapping vocab")):
             query_mapping[index] = id
-            input_ids[index] = [vec(word.lower()) for word in query]
-            attention_masks[index] = [1 for word in query]
+            input_ids[index] = [
+                vec(query[index].lower()) if index < len(query) else 0
+                for index in range(0, maxlen)
+            ]
+            attention_masks[index] = [
+                1 if index < len(query) else 0 for index in range(0, maxlen)
+            ]
 
         input_ids = pad_sequences(
             input_ids,
@@ -47,8 +62,18 @@ class EncodeTextTask(Task):
             truncating=truncating,
         )
         return {
-            "input_ids": input_ids,
-            "attention_masks": attention_masks,
+            "input_ids": np.memmap(
+                f"{output_path}/input_ids.mmap",
+                dtype=dtype,
+                mode="r+",
+                shape=(len(input), maxlen),
+            ),
+            "attention_masks": np.memmap(
+                f"{output_path}/attention_maps.mmap",
+                dtype=dtype,
+                mode="r+",
+                shape=(len(input), maxlen),
+            ),
             "query_mapping": query_mapping,
         }
 
@@ -56,6 +81,7 @@ class EncodeTextTask(Task):
     def run(
         self,
         text_input,
+        output_path,
         maxlen=128,
         dtype="int32",
         padding="post",
@@ -80,9 +106,9 @@ class EncodeTextTask(Task):
             logger.info("Pretrained file loaded")
             extend_vocab = False
             vec = (
-                lambda w: words.index.get_loc(w)
+                lambda w: words.index.get_loc(w) + 1
                 if w in words.index
-                else words.index.get_loc("unk")
+                else words.index.get_loc("unk") + 1
             )
         else:
             raise NotImplementedError("Pretrained encoding only implemented")
@@ -91,12 +117,19 @@ class EncodeTextTask(Task):
             input=tokenized_output,
             vec=vec,
             maxlen=maxlen,
+            output_path=output_path,
             dtype=dtype,
             padding=padding,
             truncating=truncating,
         )
         if pretrained_file is not None:
-            return {"inputs": vocab_mapped_text, "embedding": words.to_numpy()}
+            glove_vectors = words.to_numpy()
+            return {
+                "inputs": vocab_mapped_text,
+                "embedding": np.vstack(
+                    (np.zeros_like(glove_vectors[0]), glove_vectors)
+                ),
+            }
         else:
             return {"inputs": vocab_mapped_text}
 

@@ -9,8 +9,9 @@ class EncodingTextTest(TestCase):
             "/home/mohan/Projects/poly-nlp/data/glove/glove.6B.100d.txt"
         )
         text_encoding = EncodeTextTask()
-        text_encoding.run(
+        output = text_encoding.run(
             text_input={"1": "I am running this code"},
             pretrained_file=glove_embedding_file,
+            output_path="data/checkpoint",
         )
 
