@@ -5,15 +5,15 @@ from functools import reduce
 
 import ray
 from loguru import logger
-from tqdm import tqdm
-
 from poly_nlp.utils.data_manipulation.data_manipulation import create_dict_chunks
+from tqdm import tqdm
 
 
 class RayExecutor:
     def run(self, input, fn, fn_args, is_parallel=True, batch_count=-1, **kwargs):
         start = time.time()
         if is_parallel == True:
+            ray.init(ignore_reinit_error=True)
             remote_fn = ray.remote(fn)
 
             batch_count = (
