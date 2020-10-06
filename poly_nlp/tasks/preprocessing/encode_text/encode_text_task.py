@@ -37,7 +37,7 @@ class EncodeTextTask(Task):
         )
 
         for index, (id, query) in enumerate(tqdm(input.items(), "Mapping vocab")):
-            query_mapping[index] = id
+            query_mapping[id] = index
             input_ids[index] = [
                 vec(query[index].lower()) if index < len(query) else 0
                 for index in range(0, maxlen)
