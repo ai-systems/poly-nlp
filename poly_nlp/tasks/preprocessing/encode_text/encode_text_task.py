@@ -1,4 +1,6 @@
 import csv
+from collections.abc import MutableMapping
+from functools import reduce
 from typing import Dict
 
 import numpy as np
@@ -11,6 +13,44 @@ from prefect import Task
 from tqdm import tqdm
 
 
+class TransformedDict(MutableMapping):
+    """A dictionary that applies an arbitrary key-altering
+       function before accessing the keys"""
+
+    def __init__(self, combined_query, *args, **kwargs):
+        self.combined_query = combined_query
+        dict_values = [(id, id_map) for id, id_map in combined_query.items()]
+        self.real_store = dict()
+        self.real_store.update(dict(*args))
+        self.store = dict()
+        self.update(dict(dict_values))  # use the free update to set keys
+
+    def get_key(self, id):
+        return self.combined_query[id]
+
+    def __getitem__(self, key):
+        key, pos = self.get_key(key)
+        val_dict = {}
+        for k, v in self.real_store[key].items():
+            val_dict[k] = v[pos]
+        return val_dict
+
+    def __setitem__(self, key, value):
+        self.store[self.__keytransform__(key)] = value
+
+    def __delitem__(self, key):
+        del self.store[self.__keytransform__(key)]
+
+    def __iter__(self):
+        return iter(self.store)
+
+    def __len__(self):
+        return len(self.store)
+
+    def __keytransform__(self, key):
+        return key
+
+
 class EncodeTextTask(Task):
     @staticmethod
     def tokenize(pos, input):
@@ -21,25 +61,27 @@ class EncodeTextTask(Task):
         return query_output
 
     @staticmethod
-    def map_vocab(input, vec, maxlen, dtype, padding, truncating, output_path):
+    def map_vocab(pos, input, vec, maxlen, dtype, padding, truncating, output_path):
         query_mapping = {}
         input_ids = np.memmap(
-            f"{output_path}/input_ids.mmap",
+            f"{output_path}/input_ids_{pos}.mmap",
             dtype=dtype,
             mode="w+",
             shape=(len(input), maxlen),
         )
         attention_masks = np.memmap(
-            f"{output_path}/attention_maps.mmap",
+            f"{output_path}/attention_maps_{pos}.mmap",
             dtype=dtype,
             mode="w+",
             shape=(len(input), maxlen),
         )
 
-        for index, (id, query) in enumerate(tqdm(input.items(), "Mapping vocab")):
+        for index, (id, query) in enumerate(
+            tqdm(input.items(), f"Mapping vocab_{pos}")
+        ):
             if len(query) > maxlen:
                 logger.warning(f"{id} is greater than maximum length. Truncating")
-            query_mapping[id] = index
+            query_mapping[id] = (pos, index)
             input_ids[index] = [
                 vec(query[index].lower()) if index < len(query) else 0
                 for index in range(0, maxlen)
@@ -49,19 +91,21 @@ class EncodeTextTask(Task):
             ]
 
         return {
-            "input_ids": np.memmap(
-                f"{output_path}/input_ids.mmap",
-                dtype=dtype,
-                mode="r+",
-                shape=(len(input), maxlen),
-            ),
-            "attention_masks": np.memmap(
-                f"{output_path}/attention_maps.mmap",
-                dtype=dtype,
-                mode="r+",
-                shape=(len(input), maxlen),
-            ),
-            "query_mapping": query_mapping,
+            pos: {
+                "input_ids": np.memmap(
+                    f"{output_path}/input_ids_{pos}.mmap",
+                    dtype=dtype,
+                    mode="r+",
+                    shape=(len(input), maxlen),
+                ),
+                "attention_masks": np.memmap(
+                    f"{output_path}/attention_maps_{pos}.mmap",
+                    dtype=dtype,
+                    mode="r+",
+                    shape=(len(input), maxlen),
+                ),
+                "query_mapping": query_mapping,
+            }
         }
 
     @overrides
@@ -100,19 +144,34 @@ class EncodeTextTask(Task):
         else:
             raise NotImplementedError("Pretrained encoding only implemented")
 
-        vocab_mapped_text = self.map_vocab(
-            input=tokenized_output,
-            vec=vec,
-            maxlen=maxlen,
-            output_path=output_path,
-            dtype=dtype,
-            padding=padding,
-            truncating=truncating,
+        vocab_mapped_text = ray_executor.run(
+            tokenized_output,
+            self.map_vocab,
+            dict(
+                vec=vec,
+                maxlen=maxlen,
+                output_path=output_path,
+                dtype=dtype,
+                padding=padding,
+                truncating=truncating,
+            ),
+        )
+        combined_query_mapping = reduce(
+            lambda x, y: {**x, **y["query_mapping"]}, vocab_mapped_text.values(), {}
         )
         if pretrained_file is not None:
             glove_vectors = words.to_numpy()
             return {
-                "inputs": vocab_mapped_text,
+                "inputs": TransformedDict(
+                    combined_query_mapping,
+                    [
+                        (
+                            key,
+                            {k: v for k, v in val.items() if not k == "query_mapping"},
+                        )
+                        for key, val in vocab_mapped_text.items()
+                    ],
+                ),
                 "embedding": np.vstack(
                     (np.zeros_like(glove_vectors[0]), glove_vectors)
                 ),
