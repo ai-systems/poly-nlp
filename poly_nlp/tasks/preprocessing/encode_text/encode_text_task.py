@@ -77,10 +77,10 @@ class EncodeTextTask(Task):
         )
 
         for index, (id, query) in enumerate(
-            tqdm(input.items(), f"Mapping vocab_{pos}")
+            tqdm(input.items(), f"Mapping vocab", position=pos, disable=True)
         ):
             if len(query) > maxlen:
-                logger.warning(f"{id} is greater than maximum length. Truncating")
+                print(f"WARNING: {id} is greater than maximum length. Truncating")
             query_mapping[id] = (pos, index)
             input_ids[index] = [
                 vec(query[index].lower()) if index < len(query) else 0
