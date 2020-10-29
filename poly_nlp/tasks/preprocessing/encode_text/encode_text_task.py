@@ -1,3 +1,4 @@
+import os
 import csv
 from collections.abc import MutableMapping
 from functools import reduce
@@ -122,6 +123,9 @@ class EncodeTextTask(Task):
         extend_vocab=True,
     ):
         logger.info("Tokenizing text")
+        if not os.path.exists(output_path):
+            logger.info(f'{output_path} not exists. Creating a new one')
+            os.makedirs(output_path)
         ray_executor = RayExecutor()
         tokenized_output = ray_executor.run(text_input, self.tokenize, {})
 
