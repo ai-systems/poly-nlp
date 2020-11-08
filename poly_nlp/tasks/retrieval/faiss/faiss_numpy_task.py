@@ -23,6 +23,7 @@ class FaissIndexBuildTask(Task):
         logger.info(f"Number of GPUs available: {n_gpus}")
         index = faiss.IndexFlatL2(data_db.shape[1])
         if opts.get("mips", True):
+            logger.info('Building MIPS indexes')
             index = faiss.IndexIVFFlat(
                 index, data_db.shape[1], opts.get("nlist", 100), faiss.METRIC_L2
             )

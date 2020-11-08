@@ -1,4 +1,5 @@
 [default]
+    stanford_model='/absolute_path/to/stanfordnlp_resources'
     [default.worldtree_v1]
         train='/path/to/train'
         test='/path/to/test'
