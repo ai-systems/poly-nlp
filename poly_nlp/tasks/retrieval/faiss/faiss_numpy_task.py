@@ -1,3 +1,4 @@
+import math
 from functools import reduce
 from typing import Dict
 
@@ -12,7 +13,7 @@ import faiss
 class FaissIndexBuildTask(Task):
     @overrides
     def run(self, data: Dict[str, np.ndarray], opts={}):
-        logger.info("Constructing Faiss")
+        logger.info(f"Constructing Faiss: {opts}")
         data_db = reduce(
             lambda data, val: np.vstack((data, val)) if data is not None else val,
             data.values(),
@@ -21,12 +22,17 @@ class FaissIndexBuildTask(Task):
         logger.info(f"Shape of db {data_db.shape}")
         n_gpus = faiss.get_num_gpus()
         logger.info(f"Number of GPUs available: {n_gpus}")
-        index = faiss.IndexFlatL2(data_db.shape[1])
         if opts.get("mips", True):
-            logger.info('Building MIPS indexes')
+            logger.info("Building MIPS indexes")
+            index = faiss.IndexFlatIP(data_db.shape[1])
             index = faiss.IndexIVFFlat(
-                index, data_db.shape[1], opts.get("nlist", 100), faiss.METRIC_L2
+                index,
+                data_db.shape[1],
+                opts.get("nlist", int(4 * math.sqrt(len(data)))),
+                faiss.METRIC_INNER_PRODUCT,
             )
+        else:
+            index = faiss.IndexFlatL2(data_db.shape[1])
         if n_gpus > 0:
             logger.info("Building GPU model")
             index = faiss.index_cpu_to_all_gpus(index)
@@ -51,7 +57,7 @@ class FaissSearchTask(Task):
         )
         query_db = np.float32(query_db)
         D, I = index.search(query_db, k)
-        index.nprobe = opts.get("nprobe", 1)
+        index.nprobe = opts.get("nprobe", 4)
 
         query_output = {
             id: {"distances": D[i], "index": I[i]} for i, id in enumerate(query_dict)

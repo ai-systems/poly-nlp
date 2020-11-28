@@ -1,0 +1,1 @@
+from .soft_tail_information_retrieval_trainer import SoftTailIRTrainer
