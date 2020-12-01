@@ -130,7 +130,7 @@ class WorldTreeExtractionTask(Task):
                     "answer": answer,
                     "fold": fold,
                     "topic": topic,
-                    "grade": row[GRADE],
+                    "grade": row[GRADE] if GRADE in row else None,
                     "examName": row[EXAM_NAME],
                     # colling_expalanation=colling_expalanation,
                     # knowledge_type=knowledge_type,

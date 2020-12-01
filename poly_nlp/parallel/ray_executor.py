@@ -1,5 +1,6 @@
 import math
 import multiprocessing
+import os
 import time
 from functools import reduce
 
@@ -13,7 +14,14 @@ class RayExecutor:
     def run(self, input, fn, fn_args, is_parallel=True, batch_count=-1, **kwargs):
         start = time.time()
         if is_parallel == True:
-            ray.init(ignore_reinit_error=True)
+            try:
+                ray.init(ignore_reinit_error=True)
+            except PermissionError:
+                logger.warning(
+                    "Unable to create temp in /tmp directoy due to PermissionError. Creating it locally"
+                )
+                ray.init(ignore_reinit_error=True, temp_dir="~/tmp")
+
             remote_fn = ray.remote(fn)
 
             batch_count = (

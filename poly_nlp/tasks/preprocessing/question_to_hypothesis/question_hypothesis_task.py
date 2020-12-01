@@ -5,8 +5,8 @@ import stanfordnlp
 from conllu import parse
 from loguru import logger
 from overrides import overrides
-from tqdm import tqdm
 from prefect import Task
+from tqdm import tqdm
 
 from .rule import AnswerSpan, Question
 
@@ -27,8 +27,8 @@ class QuestionHypothesisExtractionTask(Task):
         processed_output = {}
         for index, (id, instance) in enumerate(instances.items()):
             try:
-                q_doc = self.nlp(instance['question'])
-                a_doc = self.nlp(instance['answer'])
+                q_doc = self.nlp(instance["question"])
+                a_doc = self.nlp(instance["answer"])
                 if len(q_doc.sentences) > 1:
                     pre_question = " ".join(
                         word.text
@@ -52,23 +52,21 @@ class QuestionHypothesisExtractionTask(Task):
                 question = Question(deepcopy(questions_connlu[0].tokens))
                 answer = AnswerSpan(deepcopy(answer_connlu[0].tokens))
                 if not question.isvalid:
-                    if "___." in instance['question']:
-                        hypothesis = instance['question'].replace(
-                            "___.", instance['answer']
+                    if "___." in instance["question"]:
+                        hypothesis = instance["question"].replace(
+                            "___.", instance["answer"]
                         )
                     else:
-                        hypothesis = (
-                            instance['question']
-                            + " "
-                            + instance['answer']
-                        )
+                        hypothesis = instance["question"] + " " + instance["answer"]
                     hypothesis = f"{pre_question} {hypothesis}".lstrip()
-                    logger.warning(f"Replacing with {hypothesis}")
+                    # logger.warning(f"Replacing with {hypothesis}")
                     processed_output[id] = hypothesis
                     continue
                 if not answer.isvalid:
                     logger.error(f"Answer: {instance['answer']} is invalid")
                     continue
+                # print(instance["question"])
+                # print(instance["answer"])
                 question.insert_answer_default(answer)
                 hypothesis = " ".join(question.format_declr())
                 hypothesis = f"{pre_question} {hypothesis}".lstrip()

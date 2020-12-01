@@ -1,9 +1,15 @@
 #!/usr/bin/env python
+
 # -*- coding: UTF-8 -*-
 import string
-from pattern import en
-import pattern
 from copy import deepcopy
+
+import mlconjug3
+import pattern
+from pattern import en
+
+default_conjugator = mlconjug3.Conjugator(language="en")
+
 
 alpha = string.ascii_uppercase
 alpha_lower = string.ascii_lowercase
@@ -21,8 +27,54 @@ AUX = AUX_BE + AUX_DO + AUX_HAVE
 TIME_WORDS = ["year", "month", "day", "hour", "decade", "century", "millenium"]
 DETS = ["the", "a", "an"]
 
-with open("poly_nlp/tasks/preprocessing/question_to_hypothesis/preps.txt", "r") as f:
-    common_preps = f.read().splitlines()
+# with open("preps.txt", "r") as f:
+#     common_preps = f.read().splitlines()
+
+common_preps = [
+    "with",
+    "at",
+    "from",
+    "into",
+    "during",
+    "until",
+    "against",
+    "among",
+    "throughout",
+    "due to",
+    "because of",
+    "because",
+    "towards",
+    "upon",
+    "of",
+    "to",
+    "in",
+    "for",
+    "on",
+    "by",
+    "as",
+    "about",
+    "like",
+    "through",
+    "over",
+    "before",
+    "between",
+    "after",
+    "since",
+    "without",
+    "under",
+    "within",
+    "along",
+    "across",
+    "behind",
+    "beyond",
+    "but",
+    "up",
+    "out",
+    "around",
+    "down",
+    "off",
+    "above",
+]
 
 
 def is_aux(tok):
@@ -559,14 +611,31 @@ class Question:
                 if tok["form"] == "leave":
                     new_form = "left"
                 else:
-                    new_form = pattern.en.conjugate(tok["form"], tense="past")
+                    new_form = tok["form"]
+                    for (_, c_tnse, c_prs, c_val) in default_conjugator.conjugate(
+                        tok["form"]
+                    ).iterate():
+                        if "past" in c_tnse:
+                            new_form = c_val
+                            break
+
+                    # print(tok["form"], "=", new_form)
+
+                    # new_form = pattern.en.conjugate(tok["form"], tense="past")
                 tok["form"] = new_form
                 tok["xpostag"] = "VBD"
         elif pres_3sg:
             for tok in [root] + conj:
-                tok["form"] = pattern.en.conjugate(
-                    tok["form"], tense="present", person=3, number="singular"
-                )
+                for (_, c_tnse, c_prs, c_val) in default_conjugator.conjugate(
+                    tok["form"]
+                ).iterate():
+                    if "present" in c_tnse and "3s" in c_prs:
+                        tok["form"] = c_val
+                        break
+                # print("form_u", "-", tok["form"])
+                # tok["form"] = pattern.en.conjugate(
+                #     tok["form"], tense="present", person=3, number="singular"
+                # )
                 tok["xpostag"] = "VBZ"
         return
 
@@ -759,14 +828,26 @@ class AnswerSpan:
                 if tok["form"] == "leave":
                     new_form = "left"
                 else:
-                    new_form = pattern.en.conjugate(tok["form"], tense="past")
+                    new_form = tok["form"]
+                    for (_, c_tnse, c_prs, c_val) in default_conjugator.conjugate(
+                        tok["form"]
+                    ).iterate():
+                        if "past" in c_tnse:
+                            new_form = c_val
+                            break
+                    # new_form = pattern.en.conjugate(tok["form"], tense="past")
                 tok["form"] = new_form
                 tok["xpostag"] = "VBD"
         elif pres_3sg:
             for tok in [root] + conj:
-                tok["form"] = pattern.en.conjugate(
-                    tok["form"], tense="present", person=3, number="singular"
-                )
+                for (_, c_tnse, c_prs, c_val) in default_conjugator.conjugate(
+                    tok["form"]
+                ).iterate():
+                    if "present" in c_tnse and "3s" in c_prs:
+                        tok["form"] = c_val
+                        break
+                # tok["form"] = pattern.en.conjugate(
+                #     tok["form"], tense="present", person=3, number="singular"
+                # )
                 tok["xpostag"] = "VBZ"
         return
-

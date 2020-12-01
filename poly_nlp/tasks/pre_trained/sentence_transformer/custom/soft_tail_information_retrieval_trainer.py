@@ -28,9 +28,10 @@ class SoftTailIRTrainer(Task):
         faiss_opts={"mips": True},
         **kwargs,
     ):
-        queries_train, corpus_train, relevant_docs_train = dev_data
+        queries_train, corpus_train, relevant_docs_train = train_data
         queries_dev, corpus_dev, relevant_docs_dev = dev_data
         if test_data is not None:
+            logger.warning("Test data evaluation is not implemented yet")
             queries_test, corpus_test, relevant_docs_test = test_data
 
         logger.debug("Setting up relevant train query")
@@ -55,9 +56,9 @@ class SoftTailIRTrainer(Task):
 
         with Flow("Faiss Task") as faiss_flow:
             corpus_embeddings = encoder_task(corpus_train)
-            query_embeddings = encoder_task(relevant_train_query_map)
+            c_query_embeddings = encoder_task(relevant_train_query_map)
             faiss_index = indexing_task(corpus_embeddings, faiss_opts)
-            nearest_indexes = search_task(faiss_index, query_embeddings, k=soft_tail)
+            nearest_indexes = search_task(faiss_index, c_query_embeddings, k=soft_tail)
 
         state = faiss_flow.run()
         nearest_neighbors_train = state.result[nearest_indexes]._result.value
@@ -103,10 +104,13 @@ class SoftTailIRTrainer(Task):
                             f"{tail_rel_id} (tail) not found in corpus train"
                         )
                         continue
+                    if tail_rel_id in relevant_doc_ids:
+                        continue
                     s_transformer_train_data[f"{d_id}|{tail_rel_id}"] = {
                         "sentence1": queries_train[d_id],
                         "sentence2": corpus_train[tail_rel_id],
                         "label": 1 - float(dist),
+                        # "label": float(dist),
                     }
 
         logger.info(
@@ -128,6 +132,7 @@ class SoftTailIRTrainer(Task):
                 s_transformer_train_data,
                 evaluator=dev_evaluator,
                 output_path=output_path,
+                num_epochs=kwargs.get("num_epochs", 5),
             )
 
         state = train_flow.run()
