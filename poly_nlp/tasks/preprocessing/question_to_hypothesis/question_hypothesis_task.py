@@ -25,7 +25,9 @@ class QuestionHypothesisExtractionTask(Task):
         instances,
     ):
         processed_output = {}
-        for index, (id, instance) in enumerate(instances.items()):
+        for index, (id, instance) in enumerate(
+            tqdm(instances.items(), "Extracting hypothesis")
+        ):
             try:
                 q_doc = self.nlp(instance["question"])
                 a_doc = self.nlp(instance["answer"])
@@ -63,8 +65,8 @@ class QuestionHypothesisExtractionTask(Task):
                     processed_output[id] = hypothesis
                     continue
                 if not answer.isvalid:
-                    logger.error(f"Answer: {instance['answer']} is invalid")
-                    continue
+                    logger.warning(f"Answer: {instance['answer']} is invalid")
+                    hypothesis = instance["question"] + " " + instance["answer"]
                 # print(instance["question"])
                 # print(instance["answer"])
                 question.insert_answer_default(answer)
@@ -72,6 +74,6 @@ class QuestionHypothesisExtractionTask(Task):
                 hypothesis = f"{pre_question} {hypothesis}".lstrip()
                 processed_output[id] = hypothesis
             except AssertionError:
-                logger.error(f"Question not available {instance['question']}")
-                processed_output[id] = hypothesis
+                logger.warning(f"Question not available {instance['question']}")
+                processed_output[id] = instance["question"] + " " + instance["answer"]
         return processed_output

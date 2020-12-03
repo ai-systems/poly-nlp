@@ -28,7 +28,7 @@ class FaissIndexBuildTask(Task):
             index = faiss.IndexIVFFlat(
                 index,
                 data_db.shape[1],
-                opts.get("nlist", int(4 * math.sqrt(len(data)))),
+                opts.get("nlist", int(2 * math.sqrt(len(data)))),
                 faiss.METRIC_INNER_PRODUCT,
             )
         else:

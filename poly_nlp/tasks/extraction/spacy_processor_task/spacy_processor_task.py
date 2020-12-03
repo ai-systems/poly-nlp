@@ -32,13 +32,11 @@ class SpacyProcessorTask(Task):
         return query_output
 
     @overrides
-    def run(self, query_dict: Dict, processor=None, no_parallel=False):
+    def run(self, query_dict: Dict, processor=None, is_parallel=True):
         logger.info(f"Running Spacy Task. Processor: {processor is not None}")
         ray_executor = RayExecutor()
         query_output = ray_executor.run(
-            query_dict,
-            self.tokenize,
-            {"processor": processor},
+            query_dict, self.tokenize, {"processor": processor}, is_parallel=is_parallel
         )
 
         return query_output

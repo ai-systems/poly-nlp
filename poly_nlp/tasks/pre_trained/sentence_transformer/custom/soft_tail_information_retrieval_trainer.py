@@ -132,7 +132,11 @@ class SoftTailIRTrainer(Task):
                 s_transformer_train_data,
                 evaluator=dev_evaluator,
                 output_path=output_path,
+                model_name_or_path=kwargs.get(
+                    "model_name_or_path", "bert-base-nli-stsb-mean-tokens"
+                ),
                 num_epochs=kwargs.get("num_epochs", 5),
+                train_batch_size=kwargs.get("train_batch_size", 16),
             )
 
         state = train_flow.run()
