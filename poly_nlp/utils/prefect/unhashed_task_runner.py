@@ -1,4 +1,4 @@
-from contextlib import redirect_stdout
+from contextlib import AbstractContextManager, redirect_stdout
 from typing import Any, Callable, Dict, Iterable, NamedTuple, Optional, Set, Tuple
 
 import pendulum
@@ -26,6 +26,7 @@ from prefect.engine.state import (
     TimedOut,
     TriggerFailed,
 )
+from prefect.utilities.compatibility import nullcontext
 from prefect.utilities.executors import (
     RecursiveCall,
     run_with_heartbeat,
@@ -169,7 +170,7 @@ class UnhasedTaskRunner(Runner):
         # If provided, use task's target as result location
         if self.task.target:
             if not isinstance(self.task.target, str):
-                self.result._formatter = self.task.target
+                self.result._formatter = self.task.target  # type: ignore
                 self.result.location = None
             else:
                 self.result.location = self.task.target
@@ -257,6 +258,9 @@ class UnhasedTaskRunner(Runner):
                         state, upstream_states=upstream_states
                     )
 
+                # dynamically set task run name
+                self.set_task_run_name(task_inputs=task_inputs)
+
                 if self.task.target:
                     # check to see if there is a Result at the task's target
                     state = self.check_target(state, inputs=task_inputs)
@@ -296,7 +300,7 @@ class UnhasedTaskRunner(Runner):
             raise exc
 
         except Exception as exc:
-            msg = "Task '{name}': unexpected error while running task: {exc}".format(
+            msg = "Task '{name}': Unexpected error while running task: {exc}".format(
                 name=context["task_full_name"], exc=repr(exc)
             )
             self.logger.exception(msg)
@@ -312,7 +316,8 @@ class UnhasedTaskRunner(Runner):
             # that any run-context, including task-run-ids, are respected
             with prefect.context(context):
                 self.logger.info(
-                    "Task '{name}': finished task run for task with final state: '{state}'".format(
+                    "Task '{name}': Finished task run for task with final state: "
+                    "'{state}'".format(
                         name=context["task_full_name"], state=type(state).__name__
                     )
                 )
@@ -348,7 +353,8 @@ class UnhasedTaskRunner(Runner):
 
         if not all(s.is_finished() for s in all_states):
             self.logger.debug(
-                "Task '{name}': not all upstream states are finished; ending run.".format(
+                "Task '{name}': Not all upstream states are finished; "
+                "ending run.".format(
                     name=prefect.context.get("task_full_name", self.task.name)
                 )
             )
@@ -413,6 +419,18 @@ class UnhasedTaskRunner(Runner):
             - ENDRUN: either way, we dont continue past this point
         """
         if state.is_mapped():
+            # this indicates we are executing a re-run of a mapped pipeline;
+            # in this case, we populate both `map_states` and `cached_inputs`
+            # to ensure the flow runner can properly regenerate the child tasks,
+            # regardless of whether we mapped over an exchanged piece of data
+            # or a non-data-exchanging upstream dependency
+            if len(state.map_states) == 0 and state.n_map_states > 0:  # type: ignore
+                state.map_states = [None] * state.n_map_states  # type: ignore
+            state.cached_inputs = {
+                edge.key: state._result  # type: ignore
+                for edge, state in upstream_states.items()
+                if edge.key
+            }
             raise ENDRUN(state)
 
         # we can't map if there are no success states with iterables upstream
@@ -484,12 +502,13 @@ class UnhasedTaskRunner(Runner):
             )
             if prefect.context.get("raise_on_exception"):
                 raise exc
-            raise ENDRUN(exc.state)
+            raise ENDRUN(exc.state) from exc
 
         # Exceptions are trapped and turned into TriggerFailed states
         except Exception as exc:
             self.logger.exception(
-                "Task '{name}': unexpected error while evaluating task trigger: {exc}".format(
+                "Task '{name}': Unexpected error while evaluating task trigger: "
+                "{exc}".format(
                     exc=repr(exc),
                     name=prefect.context.get("task_full_name", self.task.name),
                 )
@@ -503,7 +522,7 @@ class UnhasedTaskRunner(Runner):
                     ),
                     result=exc,
                 )
-            )
+            ) from exc
 
         return state
 
@@ -527,10 +546,10 @@ class UnhasedTaskRunner(Runner):
             return state
 
         # the task is mapped, in which case we still proceed so that the children tasks
-        # are generated (note that if the children tasks)
+        # are generated
         elif state.is_mapped():
             self.logger.debug(
-                "Task '%s': task is mapped, but run will proceed so children are generated.",
+                "Task '%s': task is already mapped, but run will proceed so children are generated.",
                 prefect.context.get("task_full_name", self.task.name),
             )
             return state
@@ -549,7 +568,7 @@ class UnhasedTaskRunner(Runner):
         # this task is already finished
         elif state.is_finished():
             self.logger.debug(
-                "Task '{name}': task is already finished.".format(
+                "Task '{name}': Task is already finished.".format(
                     name=prefect.context.get("task_full_name", self.task.name)
                 )
             )
@@ -558,7 +577,8 @@ class UnhasedTaskRunner(Runner):
         # this task is not pending
         else:
             self.logger.debug(
-                "Task '{name}' is not ready to run or state was unrecognized ({state}).".format(
+                "Task '{name}': Task is not ready to run or state was unrecognized "
+                "({state}).".format(
                     name=prefect.context.get("task_full_name", self.task.name),
                     state=state,
                 )
@@ -586,7 +606,8 @@ class UnhasedTaskRunner(Runner):
             # handle case where no start_time is set
             if state.start_time is None:
                 self.logger.debug(
-                    "Task '{name}' is scheduled without a known start_time; ending run.".format(
+                    "Task '{name}' is scheduled without a known start_time; "
+                    "ending run.".format(
                         name=prefect.context.get("task_full_name", self.task.name)
                     )
                 )
@@ -595,7 +616,8 @@ class UnhasedTaskRunner(Runner):
             # handle case where start time is in the future
             elif state.start_time and state.start_time > pendulum.now("utc"):
                 self.logger.debug(
-                    "Task '{name}': start_time has not been reached; ending run.".format(
+                    "Task '{name}': start_time has not been reached; "
+                    "ending run.".format(
                         name=prefect.context.get("task_full_name", self.task.name)
                     )
                 )
@@ -607,8 +629,8 @@ class UnhasedTaskRunner(Runner):
         self, state: State, upstream_states: Dict[Edge, State]
     ) -> Dict[str, Result]:
         """
-        Given the task's current state and upstream states, generates the inputs for this task.
-        Upstream state result values are used.
+        Given the task's current state and upstream states, generates the inputs for
+        this task. Upstream state result values are used.
 
         Args:
             - state (State): the task's current state.
@@ -644,6 +666,16 @@ class UnhasedTaskRunner(Runner):
         """
         return state, upstream_states
 
+    def set_task_run_name(self, task_inputs: Dict[str, Result]) -> None:
+        """
+        Sets the name for this task run.
+
+        Args:
+            - task_inputs (Dict[str, Result]): a dictionary of inputs whose keys correspond
+                to the task's `run()` arguments.
+        """
+        pass
+
     @call_state_handlers
     def check_target(self, state: State, inputs: Dict[str, Result]) -> State:
         """
@@ -664,19 +696,24 @@ class UnhasedTaskRunner(Runner):
             raw_inputs = {k: r.value for k, r in inputs.items()}
             formatting_kwargs = {
                 **prefect.context.get("parameters", {}).copy(),
-                **raw_inputs,
                 **prefect.context,
+                **raw_inputs,
             }
 
             if not isinstance(target, str):
                 target = target(**formatting_kwargs)
 
-            if result.exists(target, **formatting_kwargs):
-                known_location = target.format(**formatting_kwargs)
+            if result.exists(target, **formatting_kwargs):  # type: ignore
+                known_location = target.format(**formatting_kwargs)  # type: ignore
                 new_res = result.read(known_location)
                 cached_state = Cached(
                     result=new_res,
-                    hashed_inputs={},
+                    hashed_inputs={
+                        key: tokenize(list(val.value.keys()))
+                        if type(val.value) == dict
+                        else tokenize(val.value)
+                        for key, val in inputs.items()
+                    },
                     cached_result_expiration=None,
                     cached_parameters=formatting_kwargs.get("parameters"),
                     message=f"Result found at task target {known_location}",
@@ -712,7 +749,7 @@ class UnhasedTaskRunner(Runner):
                 state = Pending("Cache was invalid; ready to run.")
 
         if self.task.cache_for is not None:
-            candidate_states = []
+            candidate_states = []  # type: ignore
             if prefect.context.get("caches"):
                 candidate_states = prefect.context.caches.get(
                     self.task.cache_key or self.task.name, []
@@ -726,7 +763,7 @@ class UnhasedTaskRunner(Runner):
 
         if self.task.cache_for is not None:
             self.logger.warning(
-                "Task '{name}': can't use cache because it "
+                "Task '{name}': Can't use cache because it "
                 "is now invalid".format(
                     name=prefect.context.get("task_full_name", self.task.name)
                 )
@@ -751,7 +788,7 @@ class UnhasedTaskRunner(Runner):
         """
         if not state.is_pending():
             self.logger.debug(
-                "Task '{name}': can't set state to Running because it "
+                "Task '{name}': Can't set state to Running because it "
                 "isn't Pending; ending run.".format(
                     name=prefect.context.get("task_full_name", self.task.name)
                 )
@@ -782,7 +819,7 @@ class UnhasedTaskRunner(Runner):
         """
         if not state.is_running():
             self.logger.debug(
-                "Task '{name}': can't run task because it's not in a "
+                "Task '{name}': Can't run task because it's not in a "
                 "Running state; ending run.".format(
                     name=prefect.context.get("task_full_name", self.task.name)
                 )
@@ -792,23 +829,27 @@ class UnhasedTaskRunner(Runner):
 
         value = None
         raw_inputs = {k: r.value for k, r in inputs.items()}
+        new_state = None
         try:
             self.logger.debug(
                 "Task '{name}': Calling task.run() method...".format(
                     name=prefect.context.get("task_full_name", self.task.name)
                 )
             )
-            timeout_handler = prefect.utilities.executors.timeout_handler
-            if getattr(self.task, "log_stdout", False):
-                with redirect_stdout(
-                    prefect.utilities.logging.RedirectToLog(self.logger)  # type: ignore
-                ):
-                    value = timeout_handler(
-                        self.task.run, timeout=self.task.timeout, **raw_inputs
-                    )
-            else:
-                value = timeout_handler(
-                    self.task.run, timeout=self.task.timeout, **raw_inputs
+
+            # Create a stdout redirect if the task has log_stdout enabled
+            log_context = (
+                redirect_stdout(prefect.utilities.logging.RedirectToLog(self.logger))
+                if getattr(self.task, "log_stdout", False)
+                else nullcontext()
+            )  # type: AbstractContextManager
+
+            with log_context:
+                value = prefect.utilities.executors.run_task_with_timeout(
+                    task=self.task,
+                    args=(),
+                    kwargs=raw_inputs,
+                    logger=self.logger,
                 )
 
         # inform user of timeout
@@ -821,11 +862,10 @@ class UnhasedTaskRunner(Runner):
         except signals.LOOP as exc:
             new_state = exc.state
             assert isinstance(new_state, Looped)
-            new_state.result = self.result.from_value(value=new_state.result)
+            value = new_state.result
             new_state.message = exc.state.message or "Task is looping ({})".format(
                 new_state.loop_count
             )
-            return new_state
 
         # checkpoint tasks if a result is present, except for when the user has opted out by
         # disabling checkpointing
@@ -837,14 +877,18 @@ class UnhasedTaskRunner(Runner):
             try:
                 formatting_kwargs = {
                     **prefect.context.get("parameters", {}).copy(),
-                    **raw_inputs,
                     **prefect.context,
+                    **raw_inputs,
                 }
                 result = self.result.write(value, **formatting_kwargs)
             except NotImplementedError:
                 result = self.result.from_value(value=value)
         else:
             result = self.result.from_value(value=value)
+
+        if new_state is not None:
+            new_state.result = result
+            return new_state
 
         state = Success(result=result, message="Task run succeeded.")
         return state
@@ -877,7 +921,12 @@ class UnhasedTaskRunner(Runner):
             expiration = pendulum.now("utc") + self.task.cache_for
             cached_state = Cached(
                 result=state._result,
-                hashed_inputs={key: tokenize(val.value) for key, val in inputs.items()},
+                hashed_inputs={
+                    key: tokenize(list(val.value.keys()))
+                    if type(val.value) == dict
+                    else tokenize(val.value)
+                    for key, val in inputs.items()
+                },
                 cached_result_expiration=expiration,
                 cached_parameters=prefect.context.get("parameters"),
                 message=state.message,
@@ -920,8 +969,8 @@ class UnhasedTaskRunner(Runner):
                         raw_inputs = {k: r.value for k, r in inputs.items()}
                         formatting_kwargs = {
                             **prefect.context.get("parameters", {}).copy(),
-                            **raw_inputs,
                             **prefect.context,
+                            **raw_inputs,
                         }
                         loop_result = self.result.write(
                             loop_result.value, **formatting_kwargs

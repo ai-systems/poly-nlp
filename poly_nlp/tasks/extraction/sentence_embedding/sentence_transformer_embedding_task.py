@@ -17,7 +17,7 @@ class SentenceTransformerEmbeddingTask(Task):
     def run(
         self,
         sentences: Dict[str, str],
-        model_name: str = "roberta-base-nli-stsb-mean-tokens",
+        model_name: str = "roberta-large-nli-stsb-mean-tokens",
         batch_size: int = 8,
     ) -> Dict[str, Dict]:
         logger.info(f"Running sentence transformers, Model name: {model_name}")

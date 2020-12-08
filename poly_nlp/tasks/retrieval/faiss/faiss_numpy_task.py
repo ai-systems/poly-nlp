@@ -14,11 +14,12 @@ class FaissIndexBuildTask(Task):
     @overrides
     def run(self, data: Dict[str, np.ndarray], opts={}):
         logger.info(f"Constructing Faiss: {opts}")
-        data_db = reduce(
-            lambda data, val: np.vstack((data, val)) if data is not None else val,
-            data.values(),
-            None,
-        )
+        # data_db = reduce(
+        #     lambda data, val: np.vstack((data, val)) if data is not None else val,
+        #     data.values(),
+        #     None,
+        # )
+        data_db = np.array(list(data.values()))
         logger.info(f"Shape of db {data_db.shape}")
         n_gpus = faiss.get_num_gpus()
         logger.info(f"Number of GPUs available: {n_gpus}")
