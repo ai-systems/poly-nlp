@@ -5,8 +5,6 @@ import string
 from copy import deepcopy
 
 import mlconjug3
-import pattern
-from pattern import en
 
 default_conjugator = mlconjug3.Conjugator(language="en")
 
