@@ -57,7 +57,7 @@ class WorldTreeExtractionTask(Task):
         else:
             QID = "QuestionID"
             EXPLANATION = "explanation"
-            FOLD = "FocusNotes"
+            FOLD = "arcset"
             QUESTION = "question"
             ANSWER_KEY = "AnswerKey"
             FLAG = "flags"
