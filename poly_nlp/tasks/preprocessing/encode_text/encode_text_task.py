@@ -77,6 +77,7 @@ class EncodeTextTask(Task):
         self,
         text_input,
         output_path,
+        task_name,
         maxlen=128,
         dtype="int32",
         padding="post",
@@ -86,6 +87,7 @@ class EncodeTextTask(Task):
         extend_vocab=True,
     ):
         logger.info("Tokenizing text")
+        output_path = os.path.join(output_path, task_name)
         if not os.path.exists(output_path):
             logger.info(f"{output_path} not exists. Creating a new one")
             os.makedirs(output_path)
