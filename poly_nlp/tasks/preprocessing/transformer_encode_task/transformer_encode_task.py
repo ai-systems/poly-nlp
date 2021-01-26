@@ -86,13 +86,15 @@ class TransformerEncodeTask(Task):
 
         combined_query_mapping = vocab_mapped_text[0]["query_mapping"]
 
-        return TransformedDict(
-            combined_query_mapping,
-            [
-                (
-                    key,
-                    {k: v for k, v in val.items() if not k == "query_mapping"},
-                )
-                for key, val in vocab_mapped_text.items()
-            ],
-        )
+        return {
+            "inputs": TransformedDict(
+                combined_query_mapping,
+                [
+                    (
+                        key,
+                        {k: v for k, v in val.items() if not k == "query_mapping"},
+                    )
+                    for key, val in vocab_mapped_text.items()
+                ],
+            )
+        }

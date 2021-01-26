@@ -21,7 +21,7 @@ class EncodeTextTask(Task):
         nlp = spacy.load("en_core_web_sm")
         query_output = {}
         for id, query in input.items():
-            query_output[id] = [word.text for word in nlp(query)]
+            query_output[id] = [word.text for word in nlp(query) if word.text != " "]
         return query_output
 
     @staticmethod
