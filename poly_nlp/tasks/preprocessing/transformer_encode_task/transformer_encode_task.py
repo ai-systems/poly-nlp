@@ -40,9 +40,18 @@ class TransformerEncodeTask(Task):
             query_mapping[id] = (pos, index)
 
             # TODO: Need to map tokentype_ids
-            i_ids, a_ids, t_ids = encode_sentence_pairs(
-                sentence1=query, tokenizer=tokenizer, max_length=maxlen
-            )
+            if isinstance(query, str):
+                i_ids, a_ids, t_ids = encode_sentence_pairs(
+                    sentence1=query, tokenizer=tokenizer, max_length=maxlen
+                )
+            else:
+                i_ids, a_ids, t_ids = encode_sentence_pairs(
+                    sentence1=query["sentence1"],
+                    sentence2=query["sentence2"],
+                    tokenizer=tokenizer,
+                    max_length=maxlen,
+                )
+
             input_ids[index] = i_ids
             attention_masks[index] = a_ids
         return {
