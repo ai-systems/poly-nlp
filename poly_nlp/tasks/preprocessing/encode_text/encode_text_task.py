@@ -46,12 +46,17 @@ class EncodeTextTask(Task):
             if len(query) > maxlen:
                 print(f"WARNING: {id} is greater than maximum length. Truncating")
             query_mapping[id] = (pos, index)
-            input_ids[index] = [
-                vec(query[index].lower()) if index < len(query) else 0
-                for index in range(0, maxlen)
-            ]
+
+            input_id = [vec(text.lower()) for text in query]
+            if len(input_id) > maxlen:
+                input_ids[index] = input_id[-maxlen:]
+            else:
+                input_ids[index] = [
+                    input_id[i] if i < len(input_id) else 0 for i in range(0, maxlen)
+                ]
             attention_masks[index] = [
-                1 if index < len(query) else 0 for index in range(0, maxlen)
+                1 if i < len(input_id) and input_id[i] != 0 else 0
+                for i in range(0, maxlen)
             ]
 
         return {
@@ -77,7 +82,7 @@ class EncodeTextTask(Task):
         self,
         text_input,
         output_path,
-        task_name,
+        t_name,
         maxlen=128,
         dtype="int32",
         padding="post",
@@ -87,7 +92,7 @@ class EncodeTextTask(Task):
         extend_vocab=True,
     ):
         logger.info("Tokenizing text")
-        output_path = os.path.join(output_path, task_name)
+        output_path = os.path.join(output_path, t_name)
         if not os.path.exists(output_path):
             logger.info(f"{output_path} not exists. Creating a new one")
             os.makedirs(output_path)
