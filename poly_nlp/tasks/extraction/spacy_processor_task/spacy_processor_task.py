@@ -21,22 +21,28 @@ stop = stopwords.words("english")
 
 class SpacyProcessorTask(Task):
     @staticmethod
-    def tokenize(pos, input, processor):
+    def tokenize(pos, input, processor, filter_fn):
         nlp = spacy.load("en_core_web_sm")
         query_output = {}
         for id, query in input.items():
             query_output[id] = [
                 processor(word) if processor is not None else word
                 for word in nlp(query)
+                if filter_fn(word)
             ]
         return query_output
 
     @overrides
-    def run(self, query_dict: Dict, processor=None, is_parallel=True):
+    def run(self, query_dict: Dict, processor=None, filter_fn=None, is_parallel=True):
         logger.info(f"Running Spacy Task. Processor: {processor is not None}")
+        if filter_fn is None:
+            filter_fn = lambda word: True
         ray_executor = RayExecutor()
         query_output = ray_executor.run(
-            query_dict, self.tokenize, {"processor": processor}, is_parallel=is_parallel
+            query_dict,
+            self.tokenize,
+            {"processor": processor, "filter_fn": filter_fn},
+            is_parallel=is_parallel,
         )
 
         return query_output

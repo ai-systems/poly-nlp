@@ -77,12 +77,12 @@ class TransformerEncodeTask(Task):
         self,
         text_input,
         output_path,
-        task_name,
+        t_name,
         transformer_model,
         maxlen=128,
     ):
         logger.info("Tokenizing text")
-        output_path = os.path.join(output_path, task_name)
+        output_path = os.path.join(output_path, t_name)
         if not os.path.exists(output_path):
             logger.info(f"{output_path} not exists. Creating a new one")
             os.makedirs(output_path)
