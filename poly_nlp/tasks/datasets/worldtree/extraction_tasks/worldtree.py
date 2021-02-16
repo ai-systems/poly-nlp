@@ -115,6 +115,9 @@ class WorldTreeExtractionTask(Task):
                 else:
                     explanation = {}
                 answer = choices[answerkey] if answerkey in choices else ""
+                if answer == "":
+                    logger.warning(f"Empty answer key: {id}. Skipping it")
+                    continue
                 # Filter to those only exisiting in table stores
 
                 # colling_expalanation = row[COLLING_EXPLANATION].split(

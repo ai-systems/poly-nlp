@@ -18,3 +18,5 @@ bencode.py
 cloudpickle
 h5py
 mlconjug3
+elasticsearch-dsl
+elasticsearch

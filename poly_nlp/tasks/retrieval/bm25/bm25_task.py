@@ -14,6 +14,7 @@ import scipy.sparse as sp
 import spacy
 from loguru import logger
 from overrides import overrides
+from poly_nlp.utils.data_manipulation.data_manipulation import create_dict_chunks
 from prefect import Task
 from sklearn import feature_extraction, metrics, pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -22,21 +23,19 @@ from sklearn.metrics.pairwise import cosine_distances
 from sklearn.utils.validation import check_is_fitted
 from tqdm import tqdm
 
-from poly_nlp.utils.data_manipulation.data_manipulation import create_dict_chunks
-
 
 class BM25Transformer(BaseEstimator, TransformerMixin):
     """
-  Parameters
-  ----------
-  use_idf : boolean, optional (default=True)
-  k1 : float, optional (default=2.0)
-  b : float, optional (default=0.75)
-  References
-  ----------
-  Okapi BM25: a non-binary model - Introduction to Information Retrieval
-  http://nlp.stanford.edu/IR-book/html/htmledition/okapi-bm25-a-non-binary-model-1.html
-  """
+    Parameters
+    ----------
+    use_idf : boolean, optional (default=True)
+    k1 : float, optional (default=2.0)
+    b : float, optional (default=0.75)
+    References
+    ----------
+    Okapi BM25: a non-binary model - Introduction to Information Retrieval
+    http://nlp.stanford.edu/IR-book/html/htmledition/okapi-bm25-a-non-binary-model-1.html
+    """
 
     def __init__(self, use_idf=True, k1=2.0, b=0.75):
         self.use_idf = use_idf
@@ -114,9 +113,9 @@ class BM25Transformer(BaseEstimator, TransformerMixin):
 
 class MyBM25Transformer(BM25Transformer):
     """
-  To be used in sklearn pipeline, transformer.fit()
-  needs to be able to accept a "y" argument
-  """
+    To be used in sklearn pipeline, transformer.fit()
+    needs to be able to accept a "y" argument
+    """
 
     def fit(self, x, y=None):
         super().fit(x)
@@ -124,13 +123,14 @@ class MyBM25Transformer(BM25Transformer):
 
 class BM25Vectorizer(feature_extraction.text.TfidfVectorizer):
     """
-  Drop-in, slightly better replacement for TfidfVectorizer
-  Best results if text has already gone through stopword removal and lemmatization
-  """
+    Drop-in, slightly better replacement for TfidfVectorizer
+    Best results if text has already gone through stopword removal and lemmatization
+    """
 
     def __init__(self):
         self.vec = pipeline.make_pipeline(
-            feature_extraction.text.CountVectorizer(binary=True), MyBM25Transformer(),
+            feature_extraction.text.CountVectorizer(binary=True),
+            MyBM25Transformer(),
         )
         super().__init__()
 
@@ -173,12 +173,12 @@ class BM25SearchTask(Task):
         return query_output
 
     @overrides
-    def run(self, query_input: Dict, ix, limit=None, no_parallel=False):
+    def run(self, query_input: Dict, ix, limit=None, no_parallel=False, **kwargs):
         vectorizer, transformed_corpus, ids = ix
 
         start = time.time()
         if not no_parallel:
-            batch_count = multiprocessing.cpu_count()
+            batch_count = kwargs.pop("batch_count", multiprocessing.cpu_count())
             batch_size = math.ceil(len(query_input) / batch_count)
 
             logger.info(f"Batch_size = {batch_size}")

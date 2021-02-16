@@ -8,7 +8,6 @@ import nltk
 import ray
 import spacy
 from loguru import logger
-from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from overrides import overrides
 from poly_nlp.parallel.ray_executor import RayExecutor
@@ -16,15 +15,13 @@ from poly_nlp.utils.data_manipulation.data_manipulation import create_dict_chunk
 from prefect import Task
 from tqdm import tqdm
 
-stop = stopwords.words("english")
-
 
 class SpacyProcessorTask(Task):
     @staticmethod
     def tokenize(pos, input, processor, filter_fn):
         nlp = spacy.load("en_core_web_sm")
         query_output = {}
-        for id, query in input.items():
+        for id, query in tqdm(input.items()):
             query_output[id] = [
                 processor(word) if processor is not None else word
                 for word in nlp(query)
