@@ -69,7 +69,7 @@ class FaissSearchTask(Task):
         index.nprobe = opts.get("nprobe", 4)
 
         query_output = {
-            id: {I[i][pos]: D[i][pos] for pos in enumerate(I)}
+            id: {I[i, pos]: D[i, pos] for pos in enumerate(I)}
             for i, id in enumerate(query_dict)
         }
         return query_output
