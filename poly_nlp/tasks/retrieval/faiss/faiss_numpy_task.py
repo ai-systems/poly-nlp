@@ -18,6 +18,7 @@ class FaissIndexBuildTask(Task):
         if os.path.isfile(save_path):
             logger.info(f"Reading from saved path: {save_path}")
             index = faiss.read_index(save_path)
+            index = faiss.index_cpu_to_all_gpus(index)
         else:
             logger.info(f"Constructing Faiss: {opts}")
             # data_db = reduce(
