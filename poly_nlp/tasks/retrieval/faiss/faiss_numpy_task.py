@@ -50,7 +50,7 @@ class FaissIndexBuildTask(Task):
                 index.train(data_db)
             index.add(data_db)
             logger.info(f"Gpu Index: {index.ntotal}")
-            faiss.write_index(index, save_path)
+            faiss.write_index(faiss.index_gpu_to_cpu(index), save_path)
         return index
 
 
