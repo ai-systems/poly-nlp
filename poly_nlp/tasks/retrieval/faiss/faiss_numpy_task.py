@@ -65,11 +65,11 @@ class FaissSearchTask(Task):
             None,
         )
         query_db = np.float32(query_db)
-        index.nprobe = opts.get("nprobe", 4)
+        index.nprobe = opts.get("nprobe", 10)
         D, I = index.search(query_db, k)
 
         query_output = {
-            id: {I[i, pos]: D[i, pos] for pos in enumerate(I)}
+            id: {I[i, pos]: D[i, pos] for pos, val in enumerate(I[i])}
             for i, id in enumerate(query_dict)
         }
         return query_output
