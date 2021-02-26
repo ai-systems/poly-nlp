@@ -69,7 +69,7 @@ class AllenOIEExtractionTask(Task):
                 for group in re.findall(r"[^[]*\[([^]]*)\]", desc):
                     arg_vals = group.split(":")
                     arg_name = arg_vals[0]
-                    if len(arg_vals) == 0:
+                    if len(arg_vals) <= 1:
                         logger.warning(f"{sentences[sentence_id]} unable to parse")
                         continue
                     if len(arg_vals) > 2:
