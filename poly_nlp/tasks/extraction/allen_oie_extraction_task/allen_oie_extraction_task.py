@@ -38,6 +38,7 @@ class AllenOIEExtractionTask(Task):
 
         logger.info("Running OIE")
         logger.info(f"Batch_size = {batch_size}")
+        logger.info(f"Data size = {len(sentences)}")
         batches = create_dict_chunks(sentences, batch_size)
 
         resolved_values = {}

@@ -49,7 +49,7 @@ class GenericsKBExtractionTask(Task):
                 "score": row["SCORE"],
             }
             if filter_fn is not None:
-                skip = filter_fn(fact)
+                skip = not filter_fn(fact)
             if not skip:
                 table_items[id] = fact
         return table_items
