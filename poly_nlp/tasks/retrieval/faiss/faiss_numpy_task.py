@@ -26,7 +26,10 @@ class FaissIndexBuildTask(Task):
             #     data.values(),
             #     None,
             # )
-            data_db = np.array(list(data.values()))
+            if type(data) is dict:
+                data_db = np.array(list(data.values()))
+            else:
+                data_db = data
             logger.info(f"Shape of db {data_db.shape}")
             n_gpus = faiss.get_num_gpus()
             logger.info(f"Number of GPUs available: {n_gpus}")
